@@ -8,17 +8,17 @@
 
 #include "header.h"
 
-#define INIT_NUM (wid * len / 5)
+#define EMPTY 0
 
-void init_table(int table[len][wid])
+void init_table(int table[len][wid], int init_num)
 {
     int i, j;
     
     for (i = 0; i < len; i++)
         for (j = 0; j < wid; j++)
             table[i][j] = EMPTY;
-    for (i = 0; i < INIT_NUM; i++)
-        add_num(table);
+    for (i = 0; i < init_num; i++)
+        add_num(table, RAND_NUM);
 }
 
 int is_full(const int table[len][wid])
@@ -47,19 +47,21 @@ int is_mergeable(const int table[len][wid])
     return 0;
 }
 
+#define NOT_MOVED -1
+
 int *get_element(int [len][wid], int, int, enum dir);
 
 int merge_table(int table[len][wid], enum dir dir)
 {
-    int i, j, moved, score = 0;
+    int i, j, moved, *p, score = 0;
     int move_table(int [len][wid], enum dir);
     
     moved = move_table(table, dir);
     for (i = len - 2; i >= 0; i--)
         for (j = 0; j < wid; j++)
-            if (*get_element(table, i, j, dir) == *get_element(table, i + 1, j, dir)) {
+            if (*(p = get_element(table, i, j, dir)) == *get_element(table, i + 1, j, dir) && *p != EMPTY) {
                 score += *get_element(table, i + 1, j, dir) *= 2;
-                *get_element(table, i, j, dir) = EMPTY;
+                *p = EMPTY;
                 move_table(table, dir);
                 moved = 1;
             }
@@ -92,71 +94,70 @@ int *get_element(int table[len][wid], int m, int n, enum dir dir)
         return &table[len - m - 1][wid - n - 1];
     else if (dir == RIGHT)
         return &table[len - n - 1][m];
-    else if (dir == LEFT)
-        return &table[n][wid - m - 1];
-    return NULL;
+    return &table[n][wid - m - 1];
 }
 
 #include <time.h>
 
-void add_num(int table[len][wid])
+void add_num(int table[len][wid], int num)
 {
     int *p;
     
-    srand((unsigned) time(NULL));
     for (;;)
         if (*(p = &table[rand() % len][rand() % wid]) == EMPTY) {
-            *p = rand() % 2 ? 2 : 4;
+            *p = num;
             return;
         }
 }
 
+#include <stdio.h>
 #include <string.h>
 
-void print_table(const int table[len][wid], int cell_wid, int cell_len,
-                 char wid_char, char len_char, char node_char)
+#define WID_CHAR '-'
+#define LEN_CHAR '|'
+#define NODE_CHAR '*'
+
+void print_table(const int table[len][wid], int cell_wid, int cell_len)
 {
     int i, j, k;
     void print_times(char, int), print_mid(int, int);
     
     for (i = 0; i < len; i++) {
         for (j = 0; j < wid; j++) {
-            putchar(node_char);
-            print_times(wid_char, cell_wid);
+            putchar(NODE_CHAR);
+            print_times(WID_CHAR, cell_wid);
         }
-        putchar(node_char);
+        putchar(NODE_CHAR);
         printf("\n");
         for (j = 0; j < cell_len; j++) {
             for (k = 0; k < wid; k++) {
-                putchar(len_char);
+                putchar(LEN_CHAR);
                 if (j == cell_len / 2 && table[i][k] != EMPTY)
                     print_mid(table[i][k], cell_wid);
                 else
                     print_times(' ', cell_wid);
             }
-            putchar(len_char);
+            putchar(LEN_CHAR);
             printf("\n");
         }
     }
     for (i = 0; i < wid; i++) {
-        putchar(node_char);
-        print_times(wid_char, cell_wid);
+        putchar(NODE_CHAR);
+        print_times(WID_CHAR, cell_wid);
     }
-    putchar(node_char);
+    putchar(NODE_CHAR);
     printf("\n");
 }
 
 void print_times(char c, int times)
 {
-    int i;
-    
-    for (i = 0; i < times; i++)
+    for (; times-- > 0;)
         putchar(c);
 }
 
 #include <windows.h>
 
-#define DIVID 512
+#define DIVID 256
 #define LOW_COLOR FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN
 #define HIGH_COLOR FOREGROUND_INTENSITY | FOREGROUND_RED
 #define DEFAULT_COLOR FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE
